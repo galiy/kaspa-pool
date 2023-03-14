@@ -43,4 +43,4 @@ log_to_file: true
 # Note `:PORT` format is needed if not specifiying a specific ip range 
 prom_port: :2114
 
-
+pool_wallet: kaspa:qr6ynxghvlqm85dxj0c98ukq39n6g5928dkj575y05n4zpf3uel5288cm659a

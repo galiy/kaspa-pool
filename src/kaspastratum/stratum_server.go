@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/mattn/go-colorable"
 	"github.com/galiy/kaspa-pool/src/gostratum"
+	"github.com/mattn/go-colorable"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -26,6 +26,7 @@ type BridgeConfig struct {
 	BlockWaitTime   time.Duration `yaml:"block_wait_time"`
 	MinShareDiff    uint          `yaml:"min_share_diff"`
 	ExtranonceSize  uint          `yaml:"extranonce_size"`
+	PoolWallet      string        `yaml:"pool_wallet"`
 }
 
 func configureZap(cfg BridgeConfig) (*zap.SugaredLogger, func()) {
@@ -63,7 +64,7 @@ func ListenAndServe(cfg BridgeConfig) error {
 	if blockWaitTime < minBlockWaitTime {
 		blockWaitTime = minBlockWaitTime
 	}
-	ksApi, err := NewKaspaAPI(cfg.RPCServer, blockWaitTime, logger)
+	ksApi, err := NewKaspaAPI(cfg.RPCServer, blockWaitTime, logger, cfg.PoolWallet)
 	if err != nil {
 		return err
 	}

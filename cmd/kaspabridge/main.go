@@ -36,6 +36,7 @@ func main() {
 	flag.StringVar(&cfg.PromPort, "prom", cfg.PromPort, "address to serve prom stats, default `:2112`")
 	flag.BoolVar(&cfg.UseLogFile, "log", cfg.UseLogFile, "if true will output errors to log file, default `true`")
 	flag.StringVar(&cfg.HealthCheckPort, "hcp", cfg.HealthCheckPort, `(rarely used) if defined will expose a health check on /readyz, default ""`)
+	flag.StringVar(&cfg.PoolWallet, "pwallet", cfg.PoolWallet, `kaspa wallet for pool use. If empty - set to client wallet`)
 	flag.Parse()
 
 	if cfg.MinShareDiff == 0 {
@@ -56,6 +57,7 @@ func main() {
 	log.Printf("\tblock wait:      %s", cfg.BlockWaitTime)
 	log.Printf("\textranonce size: %d", cfg.ExtranonceSize)
 	log.Printf("\thealth check:    %s", cfg.HealthCheckPort)
+	log.Printf("\tpool wallet:     %s", cfg.PoolWallet)
 	log.Println("----------------------------------")
 
 	if err := kaspastratum.ListenAndServe(cfg); err != nil {

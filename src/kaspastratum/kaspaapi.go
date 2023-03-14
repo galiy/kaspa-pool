@@ -5,9 +5,9 @@ import (
 	//"fmt"
 	"time"
 
+	"github.com/galiy/kaspa-pool/src/gostratum"
 	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kaspad/infrastructure/network/rpcclient"
-	"github.com/galiy/kaspa-pool/src/gostratum"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -18,9 +18,10 @@ type KaspaApi struct {
 	logger        *zap.SugaredLogger
 	kaspad        *rpcclient.RPCClient
 	connected     bool
+	PoolWallet    string
 }
 
-func NewKaspaAPI(address string, blockWaitTime time.Duration, logger *zap.SugaredLogger) (*KaspaApi, error) {
+func NewKaspaAPI(address string, blockWaitTime time.Duration, logger *zap.SugaredLogger, PoolWallet string) (*KaspaApi, error) {
 	client, err := rpcclient.NewRPCClient(address)
 	if err != nil {
 		return nil, err
@@ -32,6 +33,7 @@ func NewKaspaAPI(address string, blockWaitTime time.Duration, logger *zap.Sugare
 		logger:        logger.With(zap.String("component", "kaspaapi:"+address)),
 		kaspad:        client,
 		connected:     true,
+		PoolWallet:    PoolWallet,
 	}, nil
 }
 
@@ -131,9 +133,13 @@ func (s *KaspaApi) startBlockTemplateListener(ctx context.Context, blockReadyCb 
 
 func (ks *KaspaApi) GetBlockTemplate(
 	client *gostratum.StratumContext) (*appmessage.GetBlockTemplateResponseMessage, error) {
-	template, err := ks.kaspad.GetBlockTemplate(client.WalletAddr,
-	//	fmt.Sprintf(`'%s' via onemorebsmith/kaspa-stratum-bridge_%s`, client.RemoteApp, version))
-	"pool.lamba.top")
+	targetWallet := ks.PoolWallet
+	if targetWallet == "" {
+		targetWallet = client.WalletAddr
+	}
+	template, err := ks.kaspad.GetBlockTemplate(targetWallet,
+		//	fmt.Sprintf(`'%s' via onemorebsmith/kaspa-stratum-bridge_%s`, client.RemoteApp, version))
+		"pool.lamba.top")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed fetching new block template from kaspa")
 	}
