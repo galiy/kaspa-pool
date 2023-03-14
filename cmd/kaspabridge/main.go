@@ -21,6 +21,7 @@ func main() {
 		log.Printf("config file not found: %s", err)
 		os.Exit(1)
 	}
+
 	cfg := kaspastratum.BridgeConfig{}
 	if err := yaml.Unmarshal(rawCfg, &cfg); err != nil {
 		log.Printf("failed parsing config file: %s", err)
