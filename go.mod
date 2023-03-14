@@ -16,9 +16,16 @@ require (
 )
 
 require (
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/godror/knownpb v0.1.0 // indirect
+)
+
+require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/godror/godror v0.36.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jrick/logrotate v1.0.0 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
