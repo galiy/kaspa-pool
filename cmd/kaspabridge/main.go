@@ -23,6 +23,7 @@ func main() {
 	}
 
 	cfg := kaspastratum.BridgeConfig{}
+
 	if err := yaml.Unmarshal(rawCfg, &cfg); err != nil {
 		log.Printf("failed parsing config file: %s", err)
 		os.Exit(1)
