@@ -1,4 +1,4 @@
-module github.com/onemorebsmith/kaspastratum
+module github.com/galiy/kaspa-pool
 
 go 1.18
 
