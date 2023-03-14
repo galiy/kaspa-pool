@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/galiy/kaspa-node/src/gostratum"
+	"github.com/galiy/kaspa-pool/src/gostratum"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )

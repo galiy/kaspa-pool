@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/kaspanet/kaspad/app/appmessage"
-	"github.com/galiy/kaspa-node/src/gostratum"
+	"github.com/galiy/kaspa-pool/src/gostratum"
 )
 
 func TestPromValid(t *testing.T) {
