@@ -37,7 +37,7 @@ func newClientListener(logger *zap.SugaredLogger, shareHandler *shareHandler, mi
 		minShareDiff:   minShareDiff,
 		extranonceSize: extranonceSize,
 		maxExtranonce:  int32(math.Pow(2, (8*math.Min(float64(extranonceSize), 3))) - 1),
-		nextExtranonce: 0,
+		nextExtranonce: 5003, // TODO random value
 		clientLock:     sync.RWMutex{},
 		shareHandler:   shareHandler,
 		clients:        make(map[int32]*gostratum.StratumContext),
@@ -55,8 +55,8 @@ func (c *clientListener) OnConnect(ctx *gostratum.StratumContext) {
 		if c.nextExtranonce < c.maxExtranonce {
 			c.nextExtranonce++
 		} else {
-			c.nextExtranonce = 0
-			c.logger.Warn("wrapped extranonce! new clients may be duplicating work...")
+			c.nextExtranonce = 4003
+			c.logger.Warn("Next Extranonce set to 4003...")
 		}
 	}
 	c.clients[idx] = ctx
