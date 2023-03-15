@@ -127,6 +127,10 @@ func CleanWallet(in string) (string, error) {
 		return CleanWallet("kaspa:" + in)
 	}
 
+	if len([]rune(in)) < 67 {
+		return "", errors.New(fmt.Sprintf("invalid kaspa wallet length %s", in))
+	}
+
 	// has kaspa: prefix but other weirdness somewhere
 	if walletRegex.MatchString(in) {
 		return in[0:67], nil
