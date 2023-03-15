@@ -105,7 +105,7 @@ func HandleSubmit(ctx *StratumContext, event JsonRpcEvent) error {
 }
 
 func SendExtranonce(ctx *StratumContext) {
-	if err := ctx.Send(NewEvent("", "set_extranonce", []any{ctx.Extranonce,6})); err != nil {
+	if err := ctx.Send(NewEvent("", "set_extranonce", []any{ctx.Extranonce, 6})); err != nil {
 		// should we doing anything further on failure
 		ctx.Logger.Error(errors.Wrap(err, "failed to set extranonce").Error(), zap.Any("context", ctx))
 	}
@@ -118,6 +118,11 @@ func CleanWallet(in string) (string, error) {
 	if err == nil {
 		return in, nil // good to go
 	}
+
+	if in == "" {
+		return "", errors.New("Empty wallet (need valid kaspa address)")
+	}
+
 	if !strings.HasPrefix(in, "kaspa:") {
 		return CleanWallet("kaspa:" + in)
 	}
