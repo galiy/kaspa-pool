@@ -2,7 +2,6 @@ package kaspastratum
 
 import (
 	"context"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"time"
@@ -13,7 +12,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const version = "v1.1.6"
+// const version = "v1.1.6"
 const minBlockWaitTime = 500 * time.Millisecond
 
 type BridgeConfig struct {
@@ -64,29 +63,38 @@ func ListenAndServe(cfg BridgeConfig) error {
 	if blockWaitTime < minBlockWaitTime {
 		blockWaitTime = minBlockWaitTime
 	}
+
+	// Create RPC node Client
 	ksApi, err := NewKaspaAPI(cfg.RPCServer, blockWaitTime, logger, cfg.PoolWallet)
 	if err != nil {
 		return err
 	}
 
-	if cfg.HealthCheckPort != "" {
-		logger.Info("enabling health check on port " + cfg.HealthCheckPort)
-		http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
-		go http.ListenAndServe(cfg.HealthCheckPort, nil)
-	}
+	/*
+		// Health check don't need now
+		if cfg.HealthCheckPort != "" {
+			logger.Info("enabling health check on port " + cfg.HealthCheckPort)
+			http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+			go http.ListenAndServe(cfg.HealthCheckPort, nil)
+		}*/
 
+	// Create share handler object
 	shareHandler := newShareHandler(ksApi.kaspad)
 	minDiff := cfg.MinShareDiff
 	if minDiff < 1 {
 		minDiff = 1
 	}
+
 	extranonceSize := cfg.ExtranonceSize
 	if extranonceSize > 3 {
 		extranonceSize = 3
 	}
+
+	// Create client handler
 	clientHandler := newClientListener(logger, shareHandler, float64(minDiff), int8(extranonceSize))
+
 	handlers := gostratum.DefaultHandlers()
 	// override the submit handler with an actual useful handler
 	handlers[string(gostratum.StratumMethodSubmit)] =
@@ -111,9 +119,9 @@ func ListenAndServe(cfg BridgeConfig) error {
 		clientHandler.NewBlockAvailable(ksApi)
 	})
 
-	if cfg.PrintStats {
-		go shareHandler.startStatsThread()
-	}
+	//if cfg.PrintStats {
+	//	go shareHandler.startStatsThread()
+	//}
 
 	return gostratum.NewListener(stratumConfig).Listen(context.Background())
 }

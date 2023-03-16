@@ -16,19 +16,19 @@ import (
 
 var bigJobRegex = regexp.MustCompile(".*BzMiner.*")
 
-const balanceDelay = time.Minute
+//const balanceDelay = time.Minute
 
 type clientListener struct {
-	logger           *zap.SugaredLogger
-	shareHandler     *shareHandler
-	clientLock       sync.RWMutex
-	clients          map[int32]*gostratum.StratumContext
-	lastBalanceCheck time.Time
-	clientCounter    int32
-	minShareDiff     float64
-	extranonceSize   int8
-	maxExtranonce    int32
-	nextExtranonce   int32
+	logger       *zap.SugaredLogger
+	shareHandler *shareHandler
+	clientLock   sync.RWMutex
+	clients      map[int32]*gostratum.StratumContext
+	//lastBalanceCheck time.Time
+	clientCounter  int32
+	minShareDiff   float64
+	extranonceSize int8
+	maxExtranonce  int32
+	nextExtranonce int32
 }
 
 func newClientListener(logger *zap.SugaredLogger, shareHandler *shareHandler, minShareDiff float64, extranonceSize int8) *clientListener {
@@ -66,11 +66,13 @@ func (c *clientListener) OnConnect(ctx *gostratum.StratumContext) {
 	if c.extranonceSize > 0 {
 		ctx.Extranonce = fmt.Sprintf("%0*x", c.extranonceSize*2, extranonce)
 	}
-	go func() {
-		// hacky, but give time for the authorize to go through so we can use the worker name
-		time.Sleep(5 * time.Second)
-		c.shareHandler.getCreateStats(ctx) // create the stats if they don't exist
-	}()
+	/*
+		go func() {
+			// hacky, but give time for the authorize to go through so we can use the worker name
+			time.Sleep(5 * time.Second)
+			c.shareHandler.getCreateStats(ctx) // create the stats if they don't exist
+		}()
+	*/
 }
 
 func (c *clientListener) OnDisconnect(ctx *gostratum.StratumContext) {
@@ -85,7 +87,7 @@ func (c *clientListener) OnDisconnect(ctx *gostratum.StratumContext) {
 
 func (c *clientListener) NewBlockAvailable(kapi *KaspaApi) {
 	c.clientLock.Lock()
-	addresses := make([]string, 0, len(c.clients))
+	//addresses := make([]string, 0, len(c.clients))
 	for _, cl := range c.clients {
 		if !cl.Connected() {
 			continue
@@ -165,9 +167,9 @@ func (c *clientListener) NewBlockAvailable(kapi *KaspaApi) {
 			//RecordNewJob(client)
 		}(cl)
 
-		if cl.WalletAddr != "" {
-			addresses = append(addresses, cl.WalletAddr)
-		}
+		//if cl.WalletAddr != "" {
+		//	addresses = append(addresses, cl.WalletAddr)
+		//}
 	}
 	c.clientLock.Unlock()
 
