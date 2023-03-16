@@ -56,9 +56,9 @@ func ListenAndServe(cfg BridgeConfig) error {
 	logger, logCleanup := configureZap(cfg)
 	defer logCleanup()
 
-	if cfg.PromPort != "" {
-		StartPromServer(logger, cfg.PromPort)
-	}
+	//if cfg.PromPort != "" {
+	//	StartPromServer(logger, cfg.PromPort)
+	//}
 
 	blockWaitTime := cfg.BlockWaitTime
 	if blockWaitTime < minBlockWaitTime {

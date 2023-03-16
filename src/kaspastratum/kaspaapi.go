@@ -40,10 +40,10 @@ func NewKaspaAPI(address string, blockWaitTime time.Duration, logger *zap.Sugare
 func (ks *KaspaApi) Start(ctx context.Context, blockCb func()) {
 	ks.waitForSync(true)
 	go ks.startBlockTemplateListener(ctx, blockCb)
-	go ks.startStatsThread(ctx)
+	//go ks.startStatsThread(ctx)
 }
 
-func (ks *KaspaApi) startStatsThread(ctx context.Context) {
+/*func (ks *KaspaApi) startStatsThread(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	for {
 		select {
@@ -61,10 +61,10 @@ func (ks *KaspaApi) startStatsThread(ctx context.Context) {
 				ks.logger.Warn("failed to get network hashrate from kaspa, prom stats will be out of date", zap.Error(err))
 				continue
 			}
-			RecordNetworkStats(response.NetworkHashesPerSecond, dagResponse.BlockCount, dagResponse.Difficulty)
+			//RecordNetworkStats(response.NetworkHashesPerSecond, dagResponse.BlockCount, dagResponse.Difficulty)
 		}
 	}
-}
+}*/
 
 func (ks *KaspaApi) reconnect() error {
 	if ks.kaspad != nil {

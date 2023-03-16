@@ -73,7 +73,7 @@ func (sh *shareHandler) getCreateStats(ctx *gostratum.StratumContext) *WorkStats
 
 		// TODO: not sure this is the best place, nor whether we shouldn't be
 		// resetting on disconnect
-		InitWorkerCounters(ctx)
+		//InitWorkerCounters(ctx)
 	}
 
 	sh.statsLock.Unlock()
@@ -89,28 +89,28 @@ type submitInfo struct {
 
 func validateSubmit(ctx *gostratum.StratumContext, event gostratum.JsonRpcEvent) (*submitInfo, error) {
 	if len(event.Params) < 3 {
-		RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
+		//RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
 		return nil, fmt.Errorf("malformed event, expected at least 2 params")
 	}
 	jobIdStr, ok := event.Params[1].(string)
 	if !ok {
-		RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
+		//RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
 		return nil, fmt.Errorf("unexpected type for param 1: %+v", event.Params...)
 	}
 	jobId, err := strconv.ParseInt(jobIdStr, 10, 0)
 	if err != nil {
-		RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
+		//RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
 		return nil, errors.Wrap(err, "job id is not parsable as an number")
 	}
 	state := GetMiningState(ctx)
 	block, exists := state.GetJob(int(jobId))
 	if !exists {
-		RecordWorkerError(ctx.WalletAddr, ErrMissingJob)
+		//RecordWorkerError(ctx.WalletAddr, ErrMissingJob)
 		return nil, fmt.Errorf("job does not exist. stale?")
 	}
 	noncestr, ok := event.Params[2].(string)
 	if !ok {
-		RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
+		//RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
 		return nil, fmt.Errorf("unexpected type for param 2: %+v", event.Params...)
 	}
 	return &submitInfo{
@@ -136,7 +136,7 @@ func (sh *shareHandler) checkStales(ctx *gostratum.StratumContext, si *submitInf
 		return nil // can't be
 	}
 	if tip-si.block.Header.BlueScore > workWindow {
-		RecordStaleShare(ctx)
+		//RecordStaleShare(ctx)
 		return errors.Wrapf(ErrStaleShare, "blueScore %d vs %d", si.block.Header.BlueScore, tip)
 	}
 	// TODO (bs): dupe share tracking
@@ -163,13 +163,13 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 	if state.useBigJob {
 		submitInfo.nonceVal, err = strconv.ParseUint(submitInfo.noncestr, 16, 64)
 		if err != nil {
-			RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
+			//RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
 			return errors.Wrap(err, "failed parsing noncestr")
 		}
 	} else {
 		submitInfo.nonceVal, err = strconv.ParseUint(submitInfo.noncestr, 16, 64)
 		if err != nil {
-			RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
+			//RecordWorkerError(ctx.WalletAddr, ErrBadDataFromMiner)
 			return errors.Wrap(err, "failed parsing noncestr")
 		}
 	}
@@ -217,7 +217,7 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 	stats.SharesDiff.Add(state.stratumDiff.hashValue)
 	stats.LastShare = time.Now()
 	sh.overall.SharesFound.Add(1)
-	RecordShareFound(ctx, state.stratumDiff.hashValue)
+	//(ctx, state.stratumDiff.hashValue)
 
 	return ctx.Reply(gostratum.JsonRpcResponse{
 		Id:     event.Id,
@@ -245,13 +245,13 @@ func (sh *shareHandler) submit(ctx *gostratum.StratumContext,
 			// stale
 			sh.getCreateStats(ctx).StaleShares.Add(1)
 			sh.overall.StaleShares.Add(1)
-			RecordStaleShare(ctx)
+			//RecordStaleShare(ctx)
 			return ctx.ReplyStaleShare(eventId)
 		} else {
 			ctx.Logger.Warn("block rejected, unknown issue (probably bad pow", zap.Error(err))
 			sh.getCreateStats(ctx).InvalidShares.Add(1)
 			sh.overall.InvalidShares.Add(1)
-			RecordInvalidShare(ctx)
+			//RecordInvalidShare(ctx)
 			return ctx.ReplyBadShare(eventId)
 		}
 	}
@@ -261,7 +261,7 @@ func (sh *shareHandler) submit(ctx *gostratum.StratumContext,
 	stats := sh.getCreateStats(ctx)
 	stats.BlocksFound.Add(1)
 	sh.overall.BlocksFound.Add(1)
-	RecordBlockFound(ctx, block.Header.Nonce(), block.Header.BlueScore(), blockhash.String())
+	//RecordBlockFound(ctx, block.Header.Nonce(), block.Header.BlueScore(), blockhash.String())
 
 	// nil return allows HandleSubmit to record share (blocks are shares too!) and
 	// handle the response to the client
