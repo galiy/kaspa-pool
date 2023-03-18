@@ -2,11 +2,14 @@ package kaspastratum
 
 import (
 	"context"
+	"fmt"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/galiy/kaspa-pool/src/gostratum"
+	"github.com/google/uuid"
 	"github.com/mattn/go-colorable"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -46,6 +49,16 @@ func configureZap(cfg BridgeConfig) (*zap.SugaredLogger, func()) {
 		zapcore.NewCore(fileEncoder, zapcore.AddSync(logFile), zap.InfoLevel),
 	)
 	return zap.New(core).Sugar(), func() { logFile.Close() }
+}
+
+type AuthDbQuery struct {
+	CurrentTime string
+	SesUid      string
+	RemoteAddr  string
+	WalletAddr  string
+	WorkerName  string
+	Password    string
+	RemoteApp   string
 }
 
 func ListenAndServe(cfg BridgeConfig) error {
@@ -91,6 +104,34 @@ func ListenAndServe(cfg BridgeConfig) error {
 			if err := shareHandler.HandleSubmit(ctx, event); err != nil {
 				ctx.Logger.Sugar().Error(err) // sink error
 			}
+			return nil
+		}
+
+	handlers[string(gostratum.StratumMethodAuthorize)] =
+		func(ctx *gostratum.StratumContext, event gostratum.JsonRpcEvent) error {
+			if err := gostratum.HandleAuthorize(ctx, event); err != nil {
+				return err
+			}
+
+			password, ok := event.Params[1].(string)
+			if !ok {
+				password = ""
+			}
+			ctx.Password = password
+			ctx.SesUid = strings.Replace(uuid.New().String(), "-", "", -1)
+
+			ctx.Logger.Info(fmt.Sprintf("client authorized, address: %s password: %s uid: %s", ctx.WalletAddr, ctx.Password, ctx.SesUid))
+
+			backend.AddObj("session", AuthDbQuery{
+				CurrentTime: time.Now().Format(time.RFC3339Nano),
+				SesUid:      ctx.SesUid,
+				RemoteAddr:  ctx.RemoteAddr,
+				WalletAddr:  ctx.WalletAddr,
+				WorkerName:  ctx.WorkerName,
+				Password:    ctx.Password,
+				RemoteApp:   ctx.RemoteApp,
+			})
+
 			return nil
 		}
 

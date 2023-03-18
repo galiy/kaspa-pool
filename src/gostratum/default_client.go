@@ -2,11 +2,9 @@ package gostratum
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/kaspanet/kaspad/util"
 	"github.com/mattn/go-colorable"
 	"github.com/pkg/errors"
@@ -50,20 +48,12 @@ func DefaultHandlers() StratumHandlerMap {
 }
 
 func HandleAuthorize(ctx *StratumContext, event JsonRpcEvent) error {
-
-	log.Print(event)
-
 	if len(event.Params) < 1 {
 		return fmt.Errorf("malformed event from miner, expected param[1] to be address")
 	}
 	address, ok := event.Params[0].(string)
 	if !ok {
 		return fmt.Errorf("malformed event from miner, expected param[1] to be address string")
-	}
-
-	password, ok := event.Params[1].(string)
-	if !ok {
-		password = ""
 	}
 
 	parts := strings.Split(address, ".")
@@ -78,11 +68,13 @@ func HandleAuthorize(ctx *StratumContext, event JsonRpcEvent) error {
 		return fmt.Errorf("invalid wallet format %s: %w", address, err)
 	}
 
+	if workerName == "" {
+		workerName = "default"
+	}
+
 	ctx.WalletAddr = address
 	ctx.WorkerName = workerName
 	ctx.Logger = ctx.Logger.With(zap.String("worker", ctx.WorkerName), zap.String("addr", ctx.WalletAddr))
-	ctx.Password = password
-	ctx.SesUid = strings.Replace(uuid.New().String(), "-", "", -1)
 
 	if err := ctx.Reply(NewResponse(event, true, nil)); err != nil {
 		return errors.Wrap(err, "failed to send response to authorize")
@@ -91,7 +83,7 @@ func HandleAuthorize(ctx *StratumContext, event JsonRpcEvent) error {
 		SendExtranonce(ctx)
 	}
 
-	ctx.Logger.Info(fmt.Sprintf("client authorized, address: %s password: %s uid: %s", ctx.WalletAddr, ctx.Password, ctx.SesUid))
+	ctx.Logger.Info(fmt.Sprintf("client authorized, address: %s", ctx.WalletAddr))
 	return nil
 }
 

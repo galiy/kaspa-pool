@@ -32,7 +32,6 @@ type StratumListenerConfig struct {
 	ClientListener StratumClientListener
 	StateGenerator StateGenerator
 	Port           string
-	DbBackend      *OraBackend
 }
 
 type StratumListener struct {
