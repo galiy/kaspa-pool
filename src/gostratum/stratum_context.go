@@ -18,6 +18,7 @@ type StratumContext struct {
 	RemoteAddr    string
 	WalletAddr    string
 	WorkerName    string
+	Password      string
 	RemoteApp     string
 	Id            int32
 	Logger        *zap.Logger
@@ -27,6 +28,7 @@ type StratumContext struct {
 	State         any // gross, but go generics aren't mature enough this can be typed 😭
 	writeLock     int32
 	Extranonce    string
+	SesUid        string
 }
 
 type ContextSummary struct {

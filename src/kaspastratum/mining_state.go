@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/galiy/kaspa-pool/src/gostratum"
+	"github.com/kaspanet/kaspad/app/appmessage"
 )
 
 const maxjobs = 32

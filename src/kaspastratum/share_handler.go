@@ -29,16 +29,18 @@ type WorkStats struct {
 */
 
 type shareHandler struct {
-	kaspa *rpcclient.RPCClient
+	kaspa   *rpcclient.RPCClient
+	backend *OraBackend
 	//stats        map[string]*WorkStats
 	//statsLock sync.Mutex
 	//overall      WorkStats
 	tipBlueScore uint64
 }
 
-func newShareHandler(kaspa *rpcclient.RPCClient) *shareHandler {
+func newShareHandler(kaspa *rpcclient.RPCClient, oBackend *OraBackend) *shareHandler {
 	return &shareHandler{
-		kaspa: kaspa,
+		kaspa:   kaspa,
+		backend: oBackend,
 		//stats:     map[string]*WorkStats{},
 		//statsLock: sync.Mutex{},
 	}
@@ -158,7 +160,7 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 	}
 
 	//ctx.Logger.Debug(submitInfo.block.Header.BlueScore, " submit ", submitInfo.noncestr)
-	state := GetMiningState(ctx)
+	//state := GetMiningState(ctx)
 	//if state.useBigJob {
 	submitInfo.nonceVal, err = strconv.ParseUint(submitInfo.noncestr, 16, 64)
 	if err != nil {
@@ -206,9 +208,13 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 		if err := sh.submit(ctx, converted, submitInfo.nonceVal, event.Id); err != nil {
 			return err
 		}
-	} else {
-		ctx.Logger.Info(fmt.Sprintf("Valid share %s %s %f %v %v", ctx.WorkerName, ctx.WalletAddr, state.stratumDiff.hashValue, powValue, powState.Target))
 	}
+	/*
+		else {
+			sh.backend.AddJob("share", fmt.Sprintf("Valid share %s %s %f %v %v", ctx.WorkerName, ctx.WalletAddr, state.stratumDiff.hashValue, powValue, &powState.Target))
+			//ctx.Logger.Info(fmt.Sprintf("Valid share %s %s %f %v %v", ctx.WorkerName, ctx.WalletAddr, state.stratumDiff.hashValue, powValue, &powState.Target))
+		}
+	*/
 	// remove for now until I can figure it out. No harm here as we're not
 	// } else if powValue.Cmp(state.stratumDiff.targetValue) >= 0 {
 	// 	ctx.Logger.Warn("weak block")

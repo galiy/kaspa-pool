@@ -30,3 +30,4 @@ cmd/kaspabridge/kaspabridge
 cmd/kaspabridge/bridge.
 release/
 cmd/oracletest/*
+cmd/jsontest/*

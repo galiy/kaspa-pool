@@ -16,16 +16,14 @@ import (
 const minBlockWaitTime = 500 * time.Millisecond
 
 type BridgeConfig struct {
-	StratumPort     string        `yaml:"stratum_port"`
-	RPCServer       string        `yaml:"kaspad_address"`
-	PromPort        string        `yaml:"prom_port"`
-	PrintStats      bool          `yaml:"print_stats"`
-	UseLogFile      bool          `yaml:"log_to_file"`
-	HealthCheckPort string        `yaml:"health_check_port"`
-	BlockWaitTime   time.Duration `yaml:"block_wait_time"`
-	MinShareDiff    uint          `yaml:"min_share_diff"`
-	ExtranonceSize  uint          `yaml:"extranonce_size"`
-	PoolWallet      string        `yaml:"pool_wallet"`
+	StratumPort    string        `yaml:"stratum_port"`
+	RPCServer      string        `yaml:"kaspad_address"`
+	UseLogFile     bool          `yaml:"log_to_file"`
+	BlockWaitTime  time.Duration `yaml:"block_wait_time"`
+	MinShareDiff   uint          `yaml:"min_share_diff"`
+	ExtranonceSize uint          `yaml:"extranonce_size"`
+	PoolWallet     string        `yaml:"pool_wallet"`
+	OraConnStr     string        `yaml:"ora_connstr"`
 }
 
 func configureZap(cfg BridgeConfig) (*zap.SugaredLogger, func()) {
@@ -46,7 +44,6 @@ func configureZap(cfg BridgeConfig) (*zap.SugaredLogger, func()) {
 	}
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, zapcore.AddSync(logFile), zap.InfoLevel),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(colorable.NewColorableStdout()), zap.InfoLevel),
 	)
 	return zap.New(core).Sugar(), func() { logFile.Close() }
 }
@@ -54,10 +51,6 @@ func configureZap(cfg BridgeConfig) (*zap.SugaredLogger, func()) {
 func ListenAndServe(cfg BridgeConfig) error {
 	logger, logCleanup := configureZap(cfg)
 	defer logCleanup()
-
-	//if cfg.PromPort != "" {
-	//	StartPromServer(logger, cfg.PromPort)
-	//}
 
 	blockWaitTime := cfg.BlockWaitTime
 	if blockWaitTime < minBlockWaitTime {
@@ -70,18 +63,14 @@ func ListenAndServe(cfg BridgeConfig) error {
 		return err
 	}
 
-	/*
-		// Health check don't need now
-		if cfg.HealthCheckPort != "" {
-			logger.Info("enabling health check on port " + cfg.HealthCheckPort)
-			http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			})
-			go http.ListenAndServe(cfg.HealthCheckPort, nil)
-		}*/
+	// Create Oracle backend
+	backend, err := NewOraBackend("kaspa", logger, cfg.OraConnStr)
+	if err != nil {
+		return err
+	}
 
 	// Create share handler object
-	shareHandler := newShareHandler(ksApi.kaspad)
+	shareHandler := newShareHandler(ksApi.kaspad, backend)
 	minDiff := cfg.MinShareDiff
 	if minDiff < 1 {
 		minDiff = 1
