@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/galiy/kaspa-pool/src/gostratum"
 	"github.com/kaspanet/kaspad/app/appmessage"
@@ -144,6 +145,23 @@ func (sh *shareHandler) checkStales(ctx *gostratum.StratumContext, si *submitInf
 	return nil
 }
 
+type SubmitShareDbQuery struct {
+	CurrentTime string
+	SesUid      string
+	ShareState  string
+	Difficulty  float64
+}
+
+func (sh *shareHandler) sendShareToBackend(ctx *gostratum.StratumContext, shareState string, difficulty float64) {
+	sh.backend.AddObj("share", SubmitShareDbQuery{
+		CurrentTime: time.Now().Format(time.RFC3339Nano),
+		SesUid:      ctx.SesUid,
+		ShareState:  shareState,
+		Difficulty:  difficulty,
+	})
+
+}
+
 func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostratum.JsonRpcEvent) error {
 	submitInfo, err := validateSubmit(ctx, event)
 	if err != nil {
@@ -160,7 +178,7 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 	}
 
 	//ctx.Logger.Debug(submitInfo.block.Header.BlueScore, " submit ", submitInfo.noncestr)
-	//state := GetMiningState(ctx)
+	state := GetMiningState(ctx)
 	//if state.useBigJob {
 	submitInfo.nonceVal, err = strconv.ParseUint(submitInfo.noncestr, 16, 64)
 	if err != nil {
@@ -181,18 +199,23 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 			ctx.Logger.Warn(fmt.Sprintf(err.Error()+" Dupe share %s %s "+submitInfo.noncestr, ctx.WorkerName, ctx.WalletAddr))
 			//atomic.AddInt64(&stats.StaleShares, 1)
 			//RecordDupeShare(ctx)
+			sh.sendShareToBackend(ctx, "dupe", state.stratumDiff.hashValue)
 			return ctx.ReplyDupeShare(event.Id)
 		} else if errors.Is(err, ErrStaleShare) {
 			ctx.Logger.Warn(fmt.Sprintf(err.Error()+" Stale share %s %s ", ctx.WorkerName, ctx.WalletAddr))
 			//atomic.AddInt64(&stats.StaleShares, 1)
 			//RecordStaleShare(ctx)
+			sh.sendShareToBackend(ctx, "stale", state.stratumDiff.hashValue)
 			return ctx.ReplyStaleShare(event.Id)
 
 		}
 		// unknown error somehow
+		sh.sendShareToBackend(ctx, "bad", state.stratumDiff.hashValue)
 		ctx.Logger.Warn(fmt.Sprintf("Unknown error during check stales: %s %s %s ", err.Error(), ctx.WorkerName, ctx.WalletAddr))
 		return ctx.ReplyBadShare(event.Id)
 	}
+
+	sh.sendShareToBackend(ctx, "valid", state.stratumDiff.hashValue)
 
 	converted, err := appmessage.RPCBlockToDomainBlock(submitInfo.block)
 	if err != nil {
@@ -234,6 +257,23 @@ func (sh *shareHandler) HandleSubmit(ctx *gostratum.StratumContext, event gostra
 	})
 }
 
+type SubmitBlockDbQuery struct {
+	CurrentTime string
+	SesUid      string
+	BlockState  string
+	BlockHash   string
+}
+
+func (sh *shareHandler) sendBlockToBackend(ctx *gostratum.StratumContext, blockState string, blockHash string) {
+	sh.backend.AddObj("block", SubmitBlockDbQuery{
+		CurrentTime: time.Now().Format(time.RFC3339Nano),
+		SesUid:      ctx.SesUid,
+		BlockState:  blockState,
+		BlockHash:   blockHash,
+	})
+
+}
+
 func (sh *shareHandler) submit(ctx *gostratum.StratumContext,
 	block *externalapi.DomainBlock, nonce uint64, eventId any) error {
 	mutable := block.Header.ToMutable()
@@ -251,6 +291,7 @@ func (sh *shareHandler) submit(ctx *gostratum.StratumContext,
 		// :'(
 		if strings.Contains(err.Error(), "ErrDuplicateBlock") {
 			ctx.Logger.Warn("block rejected, stale")
+			sh.sendBlockToBackend(ctx, "stale", blockhash.String())
 			// stale
 			//sh.getCreateStats(ctx).StaleShares.Add(1)
 			//sh.overall.StaleShares.Add(1)
@@ -258,6 +299,7 @@ func (sh *shareHandler) submit(ctx *gostratum.StratumContext,
 			return ctx.ReplyStaleShare(eventId)
 		} else {
 			ctx.Logger.Warn("block rejected, unknown issue (probably bad pow", zap.Error(err))
+			sh.sendBlockToBackend(ctx, "bad", blockhash.String())
 			//sh.getCreateStats(ctx).InvalidShares.Add(1)
 			//sh.overall.InvalidShares.Add(1)
 			//RecordInvalidShare(ctx)
@@ -267,6 +309,7 @@ func (sh *shareHandler) submit(ctx *gostratum.StratumContext,
 
 	// :)
 	ctx.Logger.Info(fmt.Sprintf("block accepted %s", blockhash))
+	sh.sendBlockToBackend(ctx, "valid", blockhash.String())
 	//stats := sh.getCreateStats(ctx)
 	//stats.BlocksFound.Add(1)
 	//sh.overall.BlocksFound.Add(1)

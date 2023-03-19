@@ -31,3 +31,5 @@ cmd/kaspabridge/bridge.
 release/
 cmd/oracletest/*
 cmd/jsontest/*
+kaspa-pool
+
