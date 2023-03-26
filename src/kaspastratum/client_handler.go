@@ -187,3 +187,55 @@ func (c *clientListener) NewBlockAvailable(kapi *KaspaApi) {
 		}
 	}*/
 }
+
+func (c *clientListener) OnAuthorize(ctx *gostratum.StratumContext) {
+	return
+}
+
+/*
+func HandleAuthorize(ctx *StratumContext, event JsonRpcEvent) error {
+
+	log.Print(event)
+
+	if len(event.Params) < 1 {
+		return fmt.Errorf("malformed event from miner, expected param[1] to be address")
+	}
+	address, ok := event.Params[0].(string)
+	if !ok {
+		return fmt.Errorf("malformed event from miner, expected param[1] to be address string")
+	}
+
+	password, ok := event.Params[1].(string)
+	if !ok {
+		password = ""
+	}
+
+	parts := strings.Split(address, ".")
+	var workerName string
+	if len(parts) >= 2 {
+		address = parts[0]
+		workerName = parts[1]
+	}
+	var err error
+	address, err = CleanWallet(address)
+	if err != nil {
+		return fmt.Errorf("invalid wallet format %s: %w", address, err)
+	}
+
+	ctx.WalletAddr = address
+	ctx.WorkerName = workerName
+	ctx.Logger = ctx.Logger.With(zap.String("worker", ctx.WorkerName), zap.String("addr", ctx.WalletAddr))
+	ctx.Password = password
+	ctx.SesUid = strings.Replace(uuid.New().String(), "-", "", -1)
+
+	if err := ctx.Reply(NewResponse(event, true, nil)); err != nil {
+		return errors.Wrap(err, "failed to send response to authorize")
+	}
+	if ctx.Extranonce != "" {
+		SendExtranonce(ctx)
+	}
+
+	ctx.Logger.Info(fmt.Sprintf("client authorized, address: %s password: %s uid: %s", ctx.WalletAddr, ctx.Password, ctx.SesUid))
+	return nil
+}
+*/
